@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AniVerse — Portal de Animes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- MODALS -->
+<div id="modal-overlay" class="modal-overlay hidden"></div>
+
+<!-- LOGIN MODAL -->
+<div id="modal-login" class="modal hidden">
+  <div class="modal-header"><h2>Entrar</h2><button class="modal-close" onclick="closeModal('modal-login')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+    <button class="btn-primary full-width" onclick="doLogin()">Entrar</button>
+    <p class="modal-switch">Não tem conta? <a href="#" onclick="openModal('modal-register')">Cadastre-se</a></p>
+    <p class="modal-switch"><a href="#" onclick="openModal('modal-recover')">Esqueci minha senha</a></p>
+  </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div id="modal-register" class="modal hidden">
+  <div class="modal-header"><h2>Criar Conta</h2><button class="modal-close" onclick="closeModal('modal-register')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label>Nome</label><input type="text" id="reg-name" placeholder="Seu nome"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="seu@email.com"></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="reg-pass" placeholder="••••••••"></div>
+    <button class="btn-primary full-width" onclick="doRegister()">Criar Conta</button>
+    <p class="modal-switch">Já tem conta? <a href="#" onclick="openModal('modal-login')">Entrar</a></p>
+  </div>
+</div>
+
+<!-- RECOVER MODAL -->
+<div id="modal-recover" class="modal hidden">
+  <div class="modal-header"><h2>Recuperar Senha</h2><button class="modal-close" onclick="closeModal('modal-recover')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label>Email</label><input type="email" id="rec-email" placeholder="seu@email.com"></div>
+    <button class="btn-primary full-width" onclick="doRecover()">Enviar Link</button>
+  </div>
+</div>
+
+<!-- ANIME DETAIL MODAL -->
+<div id="modal-anime" class="modal modal-large hidden">
+  <div id="modal-anime-content"></div>
+</div>
+
+<!-- EPISODE MODAL -->
+<div id="modal-episode" class="modal modal-large hidden">
+  <div id="modal-episode-content"></div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="modal-profile" class="modal hidden">
+  <div class="modal-header"><h2>Perfil</h2><button class="modal-close" onclick="closeModal('modal-profile')">✕</button></div>
+  <div id="modal-profile-content" class="modal-body"></div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div id="modal-admin" class="modal modal-large hidden">
+  <div class="modal-header"><h2>⚙ Painel Admin</h2><button class="modal-close" onclick="closeModal('modal-admin')">✕</button></div>
+  <div id="modal-admin-content" class="modal-body"></div>
+</div>
+
+<!-- NOTIFICATION -->
+<div id="notification" class="notification hidden"></div>
+
+<!-- HEADER -->
+<header id="header">
+  <div class="header-inner">
+    <div class="logo" onclick="navigateTo('home')">
+      <span class="logo-ani">ANI</span><span class="logo-verse">VERSE</span>
+      <div class="logo-glow"></div>
+    </div>
+    <nav class="main-nav" id="main-nav">
+      <a onclick="navigateTo('home')" class="nav-link active" data-page="home">Início</a>
+      <a onclick="navigateTo('catalog')" class="nav-link" data-page="catalog">Catálogo</a>
+      <a onclick="navigateTo('recent')" class="nav-link" data-page="recent">Lançamentos</a>
+      <a onclick="navigateTo('favorites')" class="nav-link" data-page="favorites">Favoritos</a>
+    </nav>
+    <div class="header-actions">
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Pesquisar anime..." oninput="searchAnimes(this.value)">
+        <span class="search-icon">⌕</span>
+        <div id="search-dropdown" class="search-dropdown hidden"></div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Modo claro/escuro">◑</button>
+      <div id="user-area">
+        <button class="btn-login" onclick="openModal('modal-login')">Entrar</button>
+        <button class="btn-register" onclick="openModal('modal-register')">Cadastrar</button>
+      </div>
+    </div>
+    <button class="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+  </div>
+</header>
+
+<!-- SEARCH RESULTS OVERLAY -->
+<div id="search-results-page" class="page hidden">
+  <div class="container">
+    <h2 class="section-title">Resultados da Pesquisa</h2>
+    <div id="search-results-grid" class="anime-grid"></div>
+  </div>
+</div>
+
+<!-- HOME PAGE -->
+<div id="page-home" class="page">
+  <!-- HERO CAROUSEL -->
+  <section class="hero-section">
+    <div id="hero-carousel" class="hero-carousel">
+      <div id="hero-slides" class="hero-slides"></div>
+      <div class="hero-controls">
+        <button onclick="prevSlide()">‹</button>
+        <div id="hero-dots" class="hero-dots"></div>
+        <button onclick="nextSlide()">›</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- POPULAR -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title"><span class="accent">🔥</span> Mais Populares</h2>
+        <a onclick="navigateTo('catalog')" class="see-all">Ver todos →</a>
+      </div>
+      <div id="popular-grid" class="anime-scroll-row"></div>
+    </div>
+  </section>
+
+  <!-- RECENT -->
+  <section class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title"><span class="accent">✦</span> Lançamentos</h2>
+        <a onclick="navigateTo('recent')" class="see-all">Ver todos →</a>
+      </div>
+      <div id="recent-grid" class="anime-scroll-row"></div>
+    </div>
+  </section>
+
+  <!-- GENRES -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title"><span class="accent">◈</span> Por Gênero</h2>
+      <div id="genre-pills" class="genre-pills"></div>
+      <div id="genre-results" class="anime-grid" style="margin-top:2rem"></div>
+    </div>
+  </section>
+
+  <!-- TOP RANKING -->
+  <section class="section section-alt">
+    <div class="container">
+      <h2 class="section-title"><span class="accent">★</span> Top Ranking</h2>
+      <div id="ranking-list" class="ranking-list"></div>
+    </div>
+  </section>
+</div>
+
+<!-- CATALOG PAGE -->
+<div id="page-catalog" class="page hidden">
+  <div class="container">
+    <div class="page-header">
+      <h1 class="page-title">Catálogo Completo</h1>
+    </div>
+    <div class="filters-bar">
+      <select id="filter-genre" onchange="applyFilters()">
+        <option value="">Todos os Gêneros</option>
+      </select>
+      <select id="filter-year" onchange="applyFilters()">
+        <option value="">Todos os Anos</option>
+      </select>
+      <select id="filter-status" onchange="applyFilters()">
+        <option value="">Todos os Status</option>
+        <option value="ongoing">Em Andamento</option>
+        <option value="finished">Finalizado</option>
+      </select>
+      <select id="filter-sort" onchange="applyFilters()">
+        <option value="popular">Mais Populares</option>
+        <option value="recent">Mais Recentes</option>
+        <option value="rating">Melhor Avaliados</option>
+        <option value="az">A-Z</option>
+      </select>
+    </div>
+    <div id="catalog-grid" class="anime-grid"></div>
+  </div>
+</div>
+
+<!-- RECENT PAGE -->
+<div id="page-recent" class="page hidden">
+  <div class="container">
+    <h1 class="page-title">Lançamentos Recentes</h1>
+    <div id="recent-page-grid" class="anime-grid"></div>
+  </div>
+</div>
+
+<!-- FAVORITES PAGE -->
+<div id="page-favorites" class="page hidden">
+  <div class="container">
+    <h1 class="page-title">Meus Favoritos</h1>
+    <div class="list-tabs">
+      <button class="list-tab active" onclick="switchListTab('favorites', this)">❤ Favoritos</button>
+      <button class="list-tab" onclick="switchListTab('watching', this)">▶ Assistindo</button>
+      <button class="list-tab" onclick="switchListTab('planned', this)">📌 Planejo Assistir</button>
+      <button class="list-tab" onclick="switchListTab('completed', this)">✓ Concluídos</button>
+      <button class="list-tab" onclick="switchListTab('history', this)">⏱ Histórico</button>
+    </div>
+    <div id="favorites-content" class="anime-grid"></div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="logo" style="margin-bottom:1rem"><span class="logo-ani">ANI</span><span class="logo-verse">VERSE</span></div>
+        <p>O maior portal de animes do Brasil. Assista, organize e descubra novos animes.</p>
+      </div>
+      <div>
+        <h4>Navegação</h4>
+        <ul><li><a onclick="navigateTo('home')">Início</a></li><li><a onclick="navigateTo('catalog')">Catálogo</a></li><li><a onclick="navigateTo('recent')">Lançamentos</a></li></ul>
+      </div>
+      <div>
+        <h4>Conta</h4>
+        <ul><li><a onclick="openModal('modal-login')">Entrar</a></li><li><a onclick="openModal('modal-register')">Cadastrar</a></li><li><a onclick="openModal('modal-profile')">Perfil</a></li></ul>
+      </div>
+      <div>
+        <h4>APIs</h4>
+        <ul><li><a>Jikan API</a></li><li><a>AniList API</a></li><li><a>Kitsu API</a></li></ul>
+        <div class="premium-badge" onclick="showPremium()">⭐ Premium</div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 AniVerse — Feito com ❤ para fãs de anime</p>
+    </div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
