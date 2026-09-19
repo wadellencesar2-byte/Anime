@@ -283,7 +283,12 @@ function showLoginError(msg) {
    ============================================================================= */
 
 function normalize(text) {
-  return text.toLowerCase().trim().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  let t = text.toLowerCase().trim().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  // aplica as gírias/abreviações do conversas.js, se o arquivo estiver carregado
+  if (typeof window !== 'undefined' && window.CONVERSAS_SYNONYMS) {
+    t = t.split(/\s+/).map(w => window.CONVERSAS_SYNONYMS[w] || w).join(' ');
+  }
+  return t;
 }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -364,7 +369,8 @@ const THINKING_PHRASES = ["Analisando sua mensagem", "Buscando contexto na base 
 /* ---------- Provedores de IA ---------- */
 
 const AIProviders = {
-  // Motor local: usa a base de conhecimento (treinada + embutida) + regras simples.
+  // Motor local: usa conhecimento treinado > biblioteca de conversas (conversas.js)
+  // > base embutida pequena > glossário técnico > fallback.
   async local(message, contextItems) {
     const norm = normalize(message);
 
@@ -374,20 +380,43 @@ const AIProviders = {
     if (norm.includes('que horas')) { const d = new Date(); return `Agora são ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}.`; }
     if (norm.includes('que dia') || norm.includes('data de hoje')) { const d = new Date(); return `Hoje é ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}.`; }
 
-    // 1) conhecimento cadastrado pelo admin, encontrado por sobreposição de palavras
+    // 1) conhecimento cadastrado pelo admin (o mais específico, sempre ganha)
     if (contextItems && contextItems.length > 0) {
       return contextItems[0].answer;
     }
 
-    // 2) base embutida por palavra-chave
+    // 2) glossário técnico ("o que é X" / "o que significa X") — checado antes
+    //    das categorias gerais, porque senão uma palavra como "api" seria
+    //    pega primeiro pela categoria de código genérica.
+    if (window.CONVERSAS_GLOSSARY) {
+      const m = norm.match(/(?:o que e|o que significa|defina|significado de)\s+(.+)/);
+      if (m) {
+        const termo = m[1].trim().replace(/[?.!]+$/, '');
+        if (window.CONVERSAS_GLOSSARY[termo]) return window.CONVERSAS_GLOSSARY[termo];
+        for (const chave of Object.keys(window.CONVERSAS_GLOSSARY)) {
+          if (norm.includes(chave)) return window.CONVERSAS_GLOSSARY[chave];
+        }
+      }
+    }
+
+    // 3) biblioteca grande de conversas do dia a dia (conversas.js)
+    if (window.CONVERSAS_BASE) {
+      for (const entry of window.CONVERSAS_BASE) {
+        if (entry.keywords.some(k => norm.includes(k))) return pick(entry.responses);
+      }
+    }
+
+    // 4) base embutida pequena (funciona mesmo se o conversas.js não carregar)
     for (const entry of BUILTIN_KNOWLEDGE) {
       if (entry.keywords.some(k => norm.includes(k))) return pick(entry.responses);
     }
 
-    // 3) fallback
+    // 5) fallback
     let trecho = message.trim();
     if (trecho.length > 60) trecho = trecho.slice(0, 57) + '...';
-    const pool = trecho.endsWith('?') ? FALLBACK_QUESTIONS : FALLBACK_STATEMENTS;
+    const isQuestion = trecho.endsWith('?');
+    const fallbacks = window.CONVERSAS_FALLBACKS || { questions: FALLBACK_QUESTIONS, statements: FALLBACK_STATEMENTS };
+    const pool = isQuestion ? fallbacks.questions : fallbacks.statements;
     return pick(pool).replace('{trecho}', trecho);
   },
 
@@ -582,7 +611,13 @@ function appendThinking() {
   const inner = document.getElementById('chat-inner');
   const msg = document.createElement('div');
   msg.className = 'msg msg--bot'; msg.id = 'typing-indicator';
-  const avatar = document.createElement('div'); avatar.className = 'msg__avatar pulsing'; avatar.textContent = 'IA';
+  const avatar = document.createElement('div');
+  avatar.className = 'msg__avatar thinking-avatar';
+  avatar.innerHTML = `<svg class="spin-logo" width="16" height="16" viewBox="0 0 32 32">
+    <rect width="32" height="32" rx="8" fill="none" stroke="#4FD1C5" stroke-width="2.5"/>
+    <path d="M9 11 L16 16 L9 21" stroke="#4FD1C5" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="18" y1="21" x2="24" y2="21" stroke="#4FD1C5" stroke-width="3" stroke-linecap="round"/>
+  </svg>`;
   const body = document.createElement('div'); body.className = 'msg__body';
   body.innerHTML = `<div class="msg__name">${escapeHtml(getAIConfig().aiName)}</div><div class="thinking"><span class="thinking__text" id="thinking-text">${THINKING_PHRASES[0]}</span><span class="thinking__dots"><span></span><span></span><span></span></span></div>`;
   msg.appendChild(avatar); msg.appendChild(body);
@@ -609,8 +644,13 @@ async function sendMessage() {
   appendThinking();
   const start = performance.now();
 
-  const conv = getConversation(currentConversationId);
-  const { text: reply, providerUsed } = await generateAIReply(text);
+  // Tempo de "raciocínio" — varia com o tamanho da pergunta, pra parecer que
+  // ela está processando de verdade em vez de responder instantaneamente.
+  const thinkTime = 700 + Math.min(text.length * 18, 1800) + Math.random() * 500;
+  const [{ text: reply, providerUsed }] = await Promise.all([
+    generateAIReply(text),
+    new Promise(resolve => setTimeout(resolve, thinkTime)),
+  ]);
   const elapsed = Math.round(performance.now() - start);
 
   removeThinking();
