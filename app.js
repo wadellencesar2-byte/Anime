@@ -440,6 +440,13 @@ const AIProviders = {
       return contextItems[0].answer;
     }
 
+    // 1.5) motor de código (codigo.js) — pedidos de criar site/componente/
+    //      explicação técnica. Pode devolver um objeto com código pra baixar.
+    if (window.CODIGO_ENGINE) {
+      const resultado = window.CODIGO_ENGINE.generate(message);
+      if (resultado) return resultado; // { text, code?, filename? }
+    }
+
     // 2) glossário técnico ("o que é X" / "o que significa X") — checado antes
     //    das categorias gerais, porque senão uma palavra como "api" seria
     //    pega primeiro pela categoria de código genérica.
@@ -517,13 +524,15 @@ async function generateAIReply(message) {
       return { text, providerUsed: 'external', context: contextItems };
     } catch (err) {
       console.warn('Provedor externo falhou, caindo para o motor local:', err.message);
-      const text = await AIProviders.local(message, contextItems);
-      return { text: text + `\n\n_(motor externo indisponível: ${err.message} — respondido pelo motor local)_`, providerUsed: 'local-fallback', context: contextItems };
+      const localResult = await AIProviders.local(message, contextItems);
+      const localObj = typeof localResult === 'string' ? { text: localResult } : localResult;
+      return { ...localObj, text: localObj.text + `\n\n_(motor externo indisponível: ${err.message} — respondido pelo motor local)_`, providerUsed: 'local-fallback', context: contextItems };
     }
   }
 
-  const text = await AIProviders.local(message, contextItems);
-  return { text, providerUsed: 'local', context: contextItems };
+  const localResult = await AIProviders.local(message, contextItems);
+  const localObj = typeof localResult === 'string' ? { text: localResult } : localResult;
+  return { ...localObj, providerUsed: 'local', context: contextItems };
 }
 
 
@@ -646,6 +655,24 @@ function appendBotShell() {
   return contentEl;
 }
 
+// Adiciona um botão "Baixar arquivo" embaixo de uma mensagem que trouxe
+// código gerado — cria o arquivo na hora, direto no navegador (sem backend).
+function addDownloadButton(contentEl, code, filename) {
+  const btn = document.createElement('button');
+  btn.textContent = '⬇️ Baixar ' + filename;
+  btn.style.cssText = 'margin-top:10px;padding:8px 16px;border-radius:8px;border:1px solid var(--accent-dim);background:var(--panel-raised);color:var(--accent);font-size:12.5px;cursor:pointer;';
+  btn.addEventListener('mouseenter', () => btn.style.borderColor = 'var(--accent)');
+  btn.addEventListener('click', () => {
+    const blob = new Blob([code], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+  contentEl.parentElement.appendChild(btn);
+}
+
 function typeOutText(el, fullText, onDone) {
   const words = fullText.split(' ');
   let i = 0;
@@ -701,7 +728,7 @@ async function sendMessage() {
   // Tempo de "raciocínio" — varia com o tamanho da pergunta, pra parecer que
   // ela está processando de verdade em vez de responder instantaneamente.
   const thinkTime = 700 + Math.min(text.length * 18, 1800) + Math.random() * 500;
-  const [{ text: reply, providerUsed }] = await Promise.all([
+  const [{ text: reply, providerUsed, code, filename }] = await Promise.all([
     generateAIReply(text),
     new Promise(resolve => setTimeout(resolve, thinkTime)),
   ]);
@@ -710,6 +737,7 @@ async function sendMessage() {
   removeThinking();
   const contentEl = appendBotShell();
   typeOutText(contentEl, reply, () => {
+    if (code) addDownloadButton(contentEl, code, filename || 'codigo.html');
     addMessageToConversation(currentConversationId, 'bot', reply);
     renderHistoryList();
     document.getElementById('send-btn').disabled = false;
