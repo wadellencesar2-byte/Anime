@@ -51,6 +51,15 @@ const CONFIG = {
   AI_NAME_DEFAULT: "WC DEV IA",
 };
 
+// Aviso de diagnóstico: se você abrir o Console do navegador (F12) e ver essa
+// mensagem, o arquivo conversas.js não carregou — confira se ele está na
+// mesma pasta do index.html e se o <script> dele aparece ANTES do app.js.
+window.addEventListener('load', () => {
+  if (!window.CONVERSAS_BASE) {
+    console.warn('[WC DEV IA] conversas.js não foi detectado. A IA vai responder só com a base mínima embutida. Confira se o arquivo conversas.js está na mesma pasta e se está referenciado no index.html antes do app.js.');
+  }
+});
+
 
 /* =============================================================================
    2. "BANCO DE DADOS" — tudo salvo em localStorage (só neste navegador)
@@ -288,9 +297,38 @@ function normalize(text) {
   if (typeof window !== 'undefined' && window.CONVERSAS_SYNONYMS) {
     t = t.split(/\s+/).map(w => window.CONVERSAS_SYNONYMS[w] || w).join(' ');
   }
+  // tira pontuação colada nas palavras (ex: "dia!" -> "dia") pra não
+  // atrapalhar a comparação de palavra-chave
+  t = t.replace(/[.,!?;:()"'`]+/g, ' ').replace(/\s+/g, ' ').trim();
   return t;
 }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// Palavras que quase não carregam significado — ignoradas na comparação,
+// pra "qual é o seu nome" bater com a palavra-chave "qual seu nome" mesmo
+// tendo uma palavra a mais no meio.
+const STOPWORDS = new Set(['a','o','os','as','um','uma','uns','umas','de','da','do','das','dos','e','é','que','com','em','no','na','nos','nas','pra','para','por','se','ta','tá','esta','voce','você','meu','minha','teu','tua','seu','sua','me','te','lhe','muito','mto']);
+
+// Compara a mensagem normalizada com uma palavra-chave (que pode ter mais
+// de uma palavra) sem exigir que seja um trecho EXATO e contíguo — basta
+// que as palavras importantes da keyword apareçam em qualquer ordem na
+// mensagem. Isso cobre um monte de jeitos diferentes de perguntar a
+// mesma coisa sem precisar cadastrar cada variação manualmente.
+function keywordMatches(normMsg, keywordPhrase) {
+  const kwWords = keywordPhrase.split(/\s+/).filter(Boolean);
+  const msgWords = normMsg.split(/\s+/);
+
+  // Palavra-chave de uma palavra só (ex: "piada", "oi") — continua exata.
+  if (kwWords.length === 1) return msgWords.includes(kwWords[0]);
+
+  // Frase com várias palavras: tira as palavras sem muito peso (stopwords) e
+  // exige pelo menos 2 palavras "de conteúdo" pra aceitar a correspondência
+  // solta — evita que uma frase curta tipo "você é bom" vire só a palavra
+  // "bom" sozinha e bata com qualquer coisa que tenha essa palavra.
+  const significant = kwWords.filter(w => !STOPWORDS.has(w) && w.length > 2);
+  const wordsToCheck = significant.length >= 2 ? significant : kwWords;
+  return wordsToCheck.every(w => msgWords.includes(w));
+}
 
 // ---- Calculadora seguRa (sem eval/Function) ----
 function trySolveMath(text) {
@@ -325,6 +363,7 @@ const BUILTIN_KNOWLEDGE = [
   { keywords: ["tudo bem", "como voce esta", "de boa"], responses: ["Tudo certo por aqui! E você, como está?", "Rodando redondo! Como vai?"] },
   { keywords: ["obrigado", "valeu", "brigado"], responses: ["Disponha!", "Por nada, precisando é só chamar."] },
   { keywords: ["tchau", "ate mais", "falou"], responses: ["Até mais!", "Falou, volte sempre!"] },
+  { keywords: ["qual seu nome", "como te chamo", "seu nome"], responses: ["Pode me chamar de assistente da WC DEV!"] },
   { keywords: ["quem e voce", "quem te criou", "wcdev"], responses: ["Sou o assistente da plataforma WC DEV IA, rodando localmente no seu navegador."] },
   { keywords: ["voce e um robo", "voce e real", "voce e uma ia"], responses: ["Sou um programa: por padrão respondo com um motor de regras local, mas dá pra ligar um provedor de IA externo nas configurações (se o servidor permitir)."] },
   { keywords: ["piada", "engracado"], responses: ["Por que o programador confundiu Halloween com o Natal? Porque OCT 31 == DEC 25.", "Existem 10 tipos de pessoas: as que entendem binário e as que não entendem."] },
@@ -402,13 +441,13 @@ const AIProviders = {
     // 3) biblioteca grande de conversas do dia a dia (conversas.js)
     if (window.CONVERSAS_BASE) {
       for (const entry of window.CONVERSAS_BASE) {
-        if (entry.keywords.some(k => norm.includes(k))) return pick(entry.responses);
+        if (entry.keywords.some(k => keywordMatches(norm, k))) return pick(entry.responses);
       }
     }
 
     // 4) base embutida pequena (funciona mesmo se o conversas.js não carregar)
     for (const entry of BUILTIN_KNOWLEDGE) {
-      if (entry.keywords.some(k => norm.includes(k))) return pick(entry.responses);
+      if (entry.keywords.some(k => keywordMatches(norm, k))) return pick(entry.responses);
     }
 
     // 5) fallback
