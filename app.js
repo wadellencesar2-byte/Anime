@@ -628,10 +628,20 @@ function wireChatEvents() {
   const input = document.getElementById('message-input');
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
   input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; });
-  document.getElementById('new-chat-btn').addEventListener('click', () => startNewConversation());
+  document.getElementById('new-chat-btn').addEventListener('click', () => { startNewConversation(); closeMobileSidebar(); });
   document.getElementById('logout-link').addEventListener('click', logout);
   document.getElementById('open-admin-link').addEventListener('click', () => location.hash = '#/admin');
   document.getElementById('open-settings-link').addEventListener('click', () => location.hash = '#/admin/configuracoes');
+
+  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+    document.querySelector('#app-screen .sidebar').classList.add('open');
+    document.getElementById('sidebar-backdrop').classList.add('open');
+  });
+  document.getElementById('sidebar-backdrop').addEventListener('click', closeMobileSidebar);
+}
+function closeMobileSidebar() {
+  document.querySelector('#app-screen .sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('open');
 }
 
 
@@ -670,6 +680,7 @@ function renderAdminTab(tab) {
   if (tab === 'dashboard') return renderDashboard(main);
   if (tab === 'usuarios') return renderUsuarios(main);
   if (tab === 'treinamento') return renderTreinamento(main);
+  if (tab === 'chat-treino') return renderChatTreino(main);
   if (tab === 'testar') return renderTestarIA(main);
   if (tab === 'configuracoes') return renderConfiguracoes(main);
   if (tab === 'logs') return renderLogs(main);
@@ -838,6 +849,134 @@ function renderTreinamento(main) {
   refreshList();
 }
 
+// ---------- Chat de Treinamento (conversa de verdade, separada do chat normal) ----------
+// Guarda o histórico dessa conversa separado, e um "estado" pra saber se está
+// no meio de uma pergunta esperando a resposta que o admin vai digitar a seguir.
+function getTrainingChat() { return DB.read('training_chat', []); }
+function saveTrainingChat(list) { DB.write('training_chat', list); }
+function getTrainingState() { return DB.read('training_state', { awaiting: null }); }
+function setTrainingState(s) { DB.write('training_state', s); }
+
+function parseTeachPattern(text) {
+  const match = text.match(/perguntarem\s+["“](.+?)["”]\s+responda\s+["“](.+?)["”]/i);
+  if (match) return { question: match[1], answer: match[2] };
+  return null;
+}
+
+function renderChatTreino(main) {
+  main.innerHTML = `
+    <div class="admin-header"><div><h2>Chat de Treinamento</h2><p>Converse ensinando a IA — diferente do chat normal, aqui tudo vira conhecimento revisável</p></div></div>
+    <div class="admin-warning">Duas formas de ensinar aqui: (1) escreva direto no formato <code>Quando perguntarem "pergunta" responda "resposta"</code>, ou (2) simplesmente digite uma pergunta — a IA vai te perguntar qual deve ser a resposta, e você responde na mensagem seguinte.</div>
+    <div class="panel-block" style="padding:0;overflow:hidden;">
+      <div id="train-chat-scroll" style="height:min(52vh,480px);overflow-y:auto;padding:20px;">
+        <div id="train-chat-inner"></div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding:14px;display:flex;gap:10px;align-items:flex-end;">
+        <textarea id="train-chat-input" rows="1" placeholder='Ex: Quando perguntarem "qual seu horário" responda "Funcionamos das 8h às 18h"' style="flex:1;background:var(--panel-raised);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:13.5px;resize:none;outline:none;"></textarea>
+        <button class="btn btn-primary" id="train-chat-send">Enviar</button>
+      </div>
+    </div>
+  `;
+
+  const inner = document.getElementById('train-chat-inner');
+  const scrollBox = document.getElementById('train-chat-scroll');
+
+  function bubble(role, html) {
+    const msg = document.createElement('div');
+    msg.className = `msg msg--${role === 'user' ? 'user' : 'bot'}`;
+    const avatar = document.createElement('div');
+    avatar.className = 'msg__avatar';
+    avatar.textContent = role === 'user' ? (currentUser.name || 'A')[0].toUpperCase() : 'IA';
+    const body = document.createElement('div');
+    body.className = 'msg__body';
+    const name = document.createElement('div');
+    name.className = 'msg__name';
+    name.textContent = role === 'user' ? currentUser.name : 'Treinador WC DEV';
+    const content = document.createElement('div');
+    content.className = 'msg__content';
+    content.innerHTML = html;
+    body.appendChild(name); body.appendChild(content);
+    msg.appendChild(avatar); msg.appendChild(body);
+    inner.appendChild(msg);
+    scrollBox.scrollTop = 999999;
+    return content;
+  }
+
+  function loadHistory() {
+    inner.innerHTML = '';
+    getTrainingChat().forEach(m => bubble(m.role, m.html));
+  }
+
+  function persist(role, html) {
+    const chat = getTrainingChat();
+    chat.push({ role, html, createdAt: new Date().toISOString() });
+    saveTrainingChat(chat.slice(-60)); // guarda só as últimas 60 mensagens
+  }
+
+  function confirmBubble(question, answer) {
+    const html = `Entendido! Vou registrar assim:<br><strong>Pergunta:</strong> ${escapeHtml(question)}<br><strong>Resposta:</strong> ${escapeHtml(answer)}
+      <div style="margin-top:10px;"><button class="btn btn-primary btn-sm" data-save>Salvar conhecimento</button> <button class="btn btn-sm" data-discard>Descartar</button></div>`;
+    const el = bubble('bot', html);
+    persist('bot', html);
+    el.querySelector('[data-save]').addEventListener('click', () => {
+      addKnowledge({ question, answer, category: 'chat-treinamento', createdBy: currentUser.email });
+      el.innerHTML = '✅ Conhecimento salvo! Já pode ser usado pelo chat normal.';
+      showToast('Conhecimento salvo!');
+    });
+    el.querySelector('[data-discard]').addEventListener('click', () => { el.innerHTML = 'Ok, descartado.'; });
+  }
+
+  function handleSend() {
+    const input = document.getElementById('train-chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+    bubble('user', escapeHtml(text));
+    persist('user', escapeHtml(text));
+    input.value = '';
+
+    const state = getTrainingState();
+
+    // Já estava esperando a resposta de uma pergunta feita antes
+    if (state.awaiting) {
+      confirmBubble(state.awaiting, text);
+      setTrainingState({ awaiting: null });
+      return;
+    }
+
+    // Formato direto: "Quando perguntarem X responda Y"
+    const parsed = parseTeachPattern(text);
+    if (parsed) {
+      confirmBubble(parsed.question, parsed.answer);
+      return;
+    }
+
+    // Mensagem parece uma pergunta solta -> pergunta qual a resposta
+    if (text.includes('?') || normalize(text).startsWith('quando')) {
+      const html = `Entendido, essa vai ser a pergunta: <strong>"${escapeHtml(text)}"</strong>. Qual deve ser a resposta quando alguém perguntar isso?`;
+      bubble('bot', html);
+      persist('bot', html);
+      setTrainingState({ awaiting: text });
+      return;
+    }
+
+    // Não entendeu o formato
+    const html = `Não consegui identificar uma pergunta aí. Você pode: digitar só a pergunta (ex: <em>"Qual o horário de funcionamento?"</em>) que eu pergunto a resposta, ou já mandar tudo no formato <code>Quando perguntarem "X" responda "Y"</code>.`;
+    bubble('bot', html);
+    persist('bot', html);
+  }
+
+  document.getElementById('train-chat-send').addEventListener('click', handleSend);
+  document.getElementById('train-chat-input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } });
+
+  loadHistory();
+  if (inner.children.length === 0) {
+    const html = 'Oi! Pode me ensinar coisas novas por aqui. Digite uma pergunta (ex: <em>"Qual o nome do projeto?"</em>) que eu te pergunto a resposta certa, ou já escreva tudo no formato <code>Quando perguntarem "X" responda "Y"</code>.';
+    bubble('bot', html);
+    persist('bot', html);
+  }
+}
+
+
 function renderTestarIA(main) {
   main.innerHTML = `
     <div class="admin-header"><div><h2>Testar IA</h2><p>Teste sem afetar o histórico dos usuários</p></div></div>
@@ -925,9 +1064,19 @@ function renderLogs(main) {
 
 function wireAdminEvents() {
   document.querySelectorAll('.admin-tab').forEach(tab => {
-    tab.addEventListener('click', () => { location.hash = '#/admin/' + tab.dataset.tab; });
+    tab.addEventListener('click', () => { location.hash = '#/admin/' + tab.dataset.tab; closeMobileAdminSidebar(); });
   });
   document.getElementById('admin-back-btn').addEventListener('click', closeAdmin);
+
+  document.getElementById('admin-mobile-menu-btn').addEventListener('click', () => {
+    document.querySelector('.admin-sidebar').classList.add('open');
+    document.getElementById('admin-sidebar-backdrop').classList.add('open');
+  });
+  document.getElementById('admin-sidebar-backdrop').addEventListener('click', closeMobileAdminSidebar);
+}
+function closeMobileAdminSidebar() {
+  document.querySelector('.admin-sidebar').classList.remove('open');
+  document.getElementById('admin-sidebar-backdrop').classList.remove('open');
 }
 
 function handleHashChange() {

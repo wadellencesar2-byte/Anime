@@ -240,8 +240,24 @@ tr:last-child td { border-bottom: none; }
 @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 900px) {
-  .sidebar, .admin-sidebar { display: none; }
+  .sidebar, .admin-sidebar {
+    position: fixed; top: 0; left: 0; height: 100%; z-index: 60;
+    transform: translateX(-100%); transition: transform .25s var(--ease);
+    box-shadow: 20px 0 40px -20px rgba(0,0,0,.6);
+  }
+  .sidebar.open, .admin-sidebar.open { transform: translateX(0); }
+  .mobile-menu-btn { display: flex !important; }
+  .sidebar-backdrop.open { display: block; }
 }
+.mobile-menu-btn {
+  display: none; align-items: center; justify-content: center; width: 34px; height: 34px;
+  border-radius: 8px; border: 1px solid var(--border); background: var(--panel-raised); color: var(--text);
+  cursor: pointer; font-size: 16px; flex-shrink: 0; margin-right: 10px;
+}
+.sidebar-backdrop {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 55;
+}
+.sidebar-backdrop.open { display: block; }
 </style>
 </head>
 <body>
@@ -308,7 +324,10 @@ tr:last-child td { border-bottom: none; }
 
     <main class="main">
       <div class="topbar">
-        <div class="topbar__title"><strong id="topbar-ai-name">WC DEV IA</strong> · chat</div>
+        <div style="display:flex;align-items:center;">
+          <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+          <div class="topbar__title"><strong id="topbar-ai-name">WC DEV IA</strong> · chat</div>
+        </div>
         <div class="badge-demo" id="provider-badge">MOTOR LOCAL</div>
       </div>
 
@@ -332,15 +351,18 @@ tr:last-child td { border-bottom: none; }
         <div class="composer-hint">Enter envia, Shift+Enter quebra linha.</div>
       </div>
     </main>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
   </div>
 
   <!-- ============================= PAINEL ADMIN ============================= -->
   <div id="admin-screen" class="hidden">
+    <button class="mobile-menu-btn" id="admin-mobile-menu-btn" style="position:fixed;top:14px;left:14px;z-index:40;">☰</button>
     <aside class="admin-sidebar">
       <div class="admin-sidebar__logo">WC<b>DEV</b> · admin</div>
       <div class="admin-tab active" data-tab="dashboard">📊 Dashboard</div>
       <div class="admin-tab" data-tab="usuarios">👥 Usuários</div>
       <div class="admin-tab" data-tab="treinamento">🧠 Treinamento da IA</div>
+      <div class="admin-tab" data-tab="chat-treino">💬 Chat de Treinamento</div>
       <div class="admin-tab" data-tab="testar">🧪 Testar IA</div>
       <div class="admin-tab" data-tab="configuracoes">⚙️ Configurações</div>
       <div class="admin-tab" data-tab="logs">📜 Logs</div>
@@ -350,6 +372,7 @@ tr:last-child td { border-bottom: none; }
     <div class="admin-main" id="admin-main">
       <!-- conteúdo de cada aba é renderizado via JS -->
     </div>
+    <div class="sidebar-backdrop" id="admin-sidebar-backdrop"></div>
   </div>
 
   <script src="app.js"></script>
