@@ -247,6 +247,126 @@ const CONVERSAS_BASE = [
   { keywords: ["duvida de portugues", "gramatica", "regra gramatical", "concordancia verbal"], responses: ["Gramática pode ser complicada às vezes! Qual é a dúvida específica?"] },
   { keywords: ["aprender ingles", "outro idioma", "aprender espanhol", "idioma novo"],
     responses: ["Aprender um novo idioma abre muitas portas. Praticar todos os dias, mesmo que pouco, faz uma diferença enorme com o tempo."] },
+
+  // ---------- Trânsito, transporte e mobilidade ----------
+  { keywords: ["transito", "engarrafamento", "transito ruim"], responses: ["Trânsito é osso, principalmente em horário de pico. Você mora numa cidade grande?", "Engarrafamento tira a paciência de qualquer um. Costuma pegar muito trânsito no seu dia a dia?"] },
+  { keywords: ["carro", "meu carro", "comprar um carro", "carro novo"], responses: ["Carro é sempre um assunto interessante — tá pensando em trocar ou é só curiosidade mesmo?"] },
+  { keywords: ["moto", "andar de moto", "comprar uma moto"], responses: ["Moto é prático pra fugir do trânsito, mas pede bastante atenção na direção. Você anda de moto?"] },
+  { keywords: ["onibus", "transporte publico", "metro"], responses: ["Transporte público varia bastante de cidade pra cidade. Como é por aí?"] },
+  { keywords: ["aplicativo de transporte", "carona por aplicativo", "app de carro"], responses: ["Apps de transporte mudaram bastante a mobilidade nas cidades grandes. Usa com frequência?"] },
+
+  // ---------- Compras e consumo ----------
+  { keywords: ["fazer compras", "promocao", "black friday", "comprar online", "loja online"],
+    responses: ["Promoção é sempre bem-vinda! Está de olho em algo específico?"] },
+  { keywords: ["entrega de comida", "pedir comida", "delivery"], responses: ["Delivery é bem prático pros dias corridos. O que você costuma pedir?"] },
+
+  // ---------- Celular, computador e internet no dia a dia ----------
+  { keywords: ["celular", "meu celular", "trocar de celular", "celular novo"], responses: ["Celular hoje em dia é praticamente uma extensão da mão da gente, né? Tá pensando em trocar o seu?"] },
+  { keywords: ["computador lento", "pc lento", "notebook lento"], responses: ["Computador lento é bem frustrante. Geralmente ajuda fechar programas em segundo plano e ver o que está consumindo mais memória."] },
+  { keywords: ["internet lenta", "wifi ruim", "sem internet", "caiu a internet"], responses: ["Internet lenta atrapalha tudo hoje em dia. Já tentou reiniciar o roteador? Às vezes resolve."] },
+  { keywords: ["bateria do celular", "celular descarregando rapido"], responses: ["Bateria que acaba rápido geralmente é aplicativo rodando em segundo plano ou tela muito brilhante. Você usa muito o celular no dia?"] },
+  { keywords: ["seguidores", "curtidas", "stories", "engajamento nas redes"], responses: ["Redes sociais têm uma dinâmica própria de engajamento. Você usa mais pra que, trabalho ou lazer?"] },
+
+  // ---------- Trabalho no dia a dia ----------
+  { keywords: ["salario", "aumento de salario", "meu salario"], responses: ["Assunto delicado! Sentiu que está na hora de pedir um aumento?"] },
+  { keywords: ["fui demitido", "perdi meu emprego", "demissao"], responses: ["Poxa, sinto muito por isso. Perder o emprego mexe bastante com a gente. Quer conversar sobre os próximos passos?"] },
+  { keywords: ["home office", "trabalho remoto", "trabalhar de casa"], responses: ["Trabalho remoto tem suas vantagens e desafios — flexibilidade de um lado, disciplina do outro. Como tem sido pra você?"] },
+  { keywords: ["freelancer", "trabalho freelance", "autonomo"], responses: ["Ser freelancer dá liberdade, mas também exige organização com prazos e clientes. Trabalha nessa área?"] },
+  { keywords: ["reuniao chata", "muita reuniao", "reuniao no trabalho"], responses: ["Reunião que podia ser um e-mail é clássico, né? Trabalho tem dessas."] },
+
+  // ---------- Educação específica ----------
+  { keywords: ["tcc", "trabalho de conclusao de curso", "monografia"], responses: ["TCC é uma fase puxada mesmo. Em que etapa você está?"] },
+  { keywords: ["mestrado", "pos graduacao", "doutorado"], responses: ["Pós-graduação exige bastante dedicação. Que área você está seguindo ou pretende seguir?"] },
+  { keywords: ["aula online", "curso online", "ead"], responses: ["Estudar EAD pede bastante autodisciplina. Está fazendo algum curso agora?"] },
+  { keywords: ["concurso publico", "estudar para concurso"], responses: ["Concurso é maratona, não corrida de 100 metros. Constância no estudo é o que mais pesa. Pra qual área você está estudando?"] },
+
+  // ---------- Saúde no dia a dia (sem aconselhamento médico) ----------
+  { keywords: ["fui ao medico", "consulta medica", "marcar consulta"], responses: ["Cuidar da saúde é sempre importante. Espero que corra tudo bem na consulta!"] },
+  { keywords: ["dentista", "dor de dente"], responses: ["Ir ao dentista ninguém ama, mas é sempre bom manter em dia. Tudo certo por aí?"] },
+  { keywords: ["gripe", "resfriado", "estou gripado"], responses: ["Poxa, se cuida! Descanso e bastante líquido costumam ajudar nesses casos."] },
+  { keywords: ["dor de cabeca", "estou com enxaqueca"], responses: ["Dor de cabeça atrapalha o dia inteiro. Já tentou descansar em um ambiente mais escuro e silencioso?"] },
+
+  // ---------- Casa e moradia ----------
+  { keywords: ["reforma da casa", "reformar", "reforma em andamento"], responses: ["Reforma é trabalhoso, mas o resultado costuma valer a pena. Em que etapa está?"] },
+  { keywords: ["aluguel", "pagar aluguel", "procurando apartamento"], responses: ["Procurar imóvel pra alugar dá um trabalho danado. Está numa busca dessas agora?"] },
+  { keywords: ["comprar uma casa", "financiar imovel", "casa propria"], responses: ["Casa própria é um objetivo e tanto! Está juntando pra isso?"] },
+  { keywords: ["decoracao", "decorar a casa", "mudar a decoracao"], responses: ["Decoração muda completamente o clima de um ambiente. Está com alguma ideia em mente?"] },
+
+  // ---------- Moda e estilo ----------
+  { keywords: ["roupa", "moda", "estilo de roupa", "o que vestir"], responses: ["Moda é uma forma de expressar personalidade. Você tem um estilo que mais curte?"] },
+
+  // ---------- Festas e cultura brasileira ----------
+  { keywords: ["carnaval", "bloco de carnaval", "folia"], responses: ["Carnaval é uma das festas mais animadas do Brasil! Costuma curtir?"] },
+  { keywords: ["festa junina", "arraia", "quadrilha"], responses: ["Festa junina tem uma energia gostosa — comida boa, música e dança. Curte essa época do ano?"] },
+
+  // ---------- Bebidas ----------
+  { keywords: ["cafe", "tomar um cafe", "cafezinho"], responses: ["Café é praticamente um combustível pro dia, né? Toma quantas xícaras por dia?"] },
+  { keywords: ["cerveja", "tomar uma cerveja", "happy hour"], responses: ["Happy hour com os amigos é sempre bem-vindo depois de uma semana corrida."] },
+  { keywords: ["cha", "tomar um cha"], responses: ["Chá é ótimo pra relaxar, principalmente à noite. Tem algum tipo favorito?"] },
+
+  // ---------- Vida adulta ----------
+  { keywords: ["pagar conta", "boleto", "imposto de renda", "declarar imposto"], responses: ["Vida adulta tem dessas responsabilidades chatinhas mesmo. Organização é tudo nessa hora."] },
+
+  // ---------- Games específicos ----------
+  { keywords: ["minecraft"], responses: ["Minecraft é um clássico atemporal — criatividade sem limite. Joga no modo sobrevivência ou criativo?"] },
+  { keywords: ["fortnite"], responses: ["Fortnite continua bombando! Curte jogar battle royale?"] },
+  { keywords: ["league of legends", "lol o jogo"], responses: ["League of Legends tem uma comunidade gigante e competitiva. Joga ranqueada?"] },
+  { keywords: ["gta", "grand theft auto"], responses: ["GTA é um dos jogos mais icônicos que existem. Já jogou os mais recentes da franquia?"] },
+
+  // ---------- Livros e séries por gênero ----------
+  { keywords: ["livro de ficcao", "ficcao cientifica", "fantasia livro"], responses: ["Ficção científica e fantasia abrem portas pra mundos incríveis. Tem algum autor favorito?"] },
+  { keywords: ["romance livro", "livro de romance"], responses: ["Romance é um gênero que conquista muita gente. Curte esse tipo de leitura?"] },
+  { keywords: ["terror filme", "filme de terror", "filme de suspense"], responses: ["Filme de terror é ótimo pra uma noite de adrenalina! Curte esse gênero?"] },
+
+  // ---------- Humor e memes ----------
+  { keywords: ["meme", "virou meme", "mandar um meme"], responses: ["Memes são a linguagem universal da internet, né? Tem algum favorito recente?"] },
+
+  // ---------- Emoções mais específicas ----------
+  { keywords: ["sinto saudade", "com saudade", "sentindo falta"], responses: ["Saudade é um sentimento bem forte. De quem ou do que você está com saudade?"] },
+  { keywords: ["me sinto sozinho", "solidao", "me sinto sozinha"], responses: ["Sentir-se sozinho às vezes pesa bastante. Quer conversar mais sobre isso?"] },
+  { keywords: ["baixa autoestima", "nao acredito em mim", "falta de confianca"], responses: ["Autoestima balança em todo mundo às vezes. Pequenas conquistas do dia a dia ajudam a reconstruir essa confiança aos poucos."] },
+  { keywords: ["tive um pesadelo", "sonho estranho", "sonhei que"], responses: ["Sonhos às vezes mexem bastante com a gente. Quer me contar o que sonhou?"] },
+
+  // ---------- Superstição ----------
+  { keywords: ["superticao", "da azar", "da sorte", "simpatia"], responses: ["Superstição é um assunto curioso — cada cultura tem as suas. Você acredita em alguma?"] },
+
+  // ---------- Tecnologia do futuro ----------
+  { keywords: ["carro eletrico", "carro autonomo"], responses: ["Carros elétricos e autônomos vêm avançando bastante nos últimos anos. Curte acompanhar essas novidades?"] },
+  { keywords: ["robo", "robotica"], responses: ["Robótica tem evoluído demais — de braços industriais a robôs humanoides. Te interessa essa área?"] },
+  { keywords: ["casa inteligente", "smart home", "automacao residencial"], responses: ["Automação residencial deixa o dia a dia bem mais prático. Tem algum dispositivo inteligente em casa?"] },
+
+  // ---------- Culinária internacional ----------
+  { keywords: ["comida italiana", "macarrão", "pizza"], responses: ["Comida italiana é sempre uma boa pedida! Prefere massa ou pizza?"] },
+  { keywords: ["comida japonesa", "sushi", "temaki"], responses: ["Comida japonesa tem uma técnica impressionante. Curte sushi?"] },
+  { keywords: ["comida mexicana", "taco", "burrito"], responses: ["Comida mexicana costuma agradar bastante, com aquele toque picante. Curte?"] },
+
+  // ---------- Animais específicos ----------
+  { keywords: ["leao", "tigre", "onca"], responses: ["Grandes felinos são impressionantes — força e elegância ao mesmo tempo."] },
+  { keywords: ["tubarao"], responses: ["Tubarões têm uma fama exagerada de perigo — a maioria das espécies não representa risco real pra humanos."] },
+  { keywords: ["baleia", "golfinho"], responses: ["Baleias e golfinhos são mamíferos marinhos fascinantes, com uma inteligência impressionante."] },
+
+  // ---------- Carreira e desenvolvimento profissional ----------
+  { keywords: ["crescer na carreira", "crescimento profissional", "plano de carreira"], responses: ["Crescimento profissional costuma vir de uma mistura de constância, network e aprendizado contínuo. Em que área você atua?"] },
+  { keywords: ["linkedin", "meu curriculo", "atualizar curriculo"], responses: ["Currículo bem atualizado faz diferença. Está se candidatando a alguma vaga?"] },
+  { keywords: ["networking", "fazer contatos profissionais"], responses: ["Networking abre muitas portas ao longo da carreira. Costuma participar de eventos da sua área?"] },
+
+  // ---------- Podcast e conteúdo ----------
+  { keywords: ["podcast", "ouvir podcast"], responses: ["Podcast é ótimo pra aprender coisa nova no trânsito ou na academia. Tem algum que você curte?"] },
+  { keywords: ["livro de autoajuda", "desenvolvimento pessoal"], responses: ["Livros de desenvolvimento pessoal têm ajudado bastante gente a organizar a cabeça. Já leu algum que te marcou?"] },
+
+  // ---------- Espiritualidade genérica ----------
+  { keywords: ["espiritualidade", "fe", "oracao"], responses: ["Espiritualidade é algo bem pessoal — cada um vive isso de um jeito. Quer comentar mais sobre o que você sente?"] },
+
+  // ---------- Corpo humano e curiosidades científicas extras ----------
+  { keywords: ["corpo humano", "curiosidade do corpo"], responses: ["O corpo humano é uma máquina impressionante — o coração bate cerca de 100 mil vezes por dia, por exemplo."] },
+  { keywords: ["universo", "big bang", "origem do universo"], responses: ["O Big Bang é a teoria mais aceita pra explicar a origem do universo, há cerca de 13,8 bilhões de anos."] },
+
+  // ---------- Vida no interior vs cidade grande ----------
+  { keywords: ["cidade grande", "morar em cidade grande", "vida na cidade"], responses: ["Cidade grande tem suas vantagens (oportunidades, movimento) e desafios (trânsito, custo de vida). Você mora em uma?"] },
+  { keywords: ["interior", "cidade pequena", "morar no interior"], responses: ["Cidade pequena costuma ter um ritmo mais tranquilo. Curte esse estilo de vida?"] },
+
+  // ---------- Notícias e atualidades (de forma neutra) ----------
+  { keywords: ["noticias", "atualidades", "o que esta acontecendo no mundo"], responses: ["Não tenho acesso a notícias em tempo real nesse motor local — pra isso seria preciso conectar uma fonte de notícias de verdade."] },
 ];
 
 

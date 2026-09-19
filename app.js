@@ -315,19 +315,35 @@ const STOPWORDS = new Set(['a','o','os','as','um','uma','uns','umas','de','da','
 // mensagem. Isso cobre um monte de jeitos diferentes de perguntar a
 // mesma coisa sem precisar cadastrar cada variação manualmente.
 function keywordMatches(normMsg, keywordPhrase) {
+  return keywordMatchScore(normMsg, keywordPhrase) > 0;
+}
+
+// Mesma lógica de keywordMatches, mas devolve um número: 0 = não bateu,
+// e quanto maior o número, mais específica (mais palavras de peso) foi a
+// combinação. Isso permite escolher a categoria MAIS ESPECÍFICA quando
+// várias batem ao mesmo tempo, em vez de sempre pegar a primeira da lista.
+function keywordMatchScore(normMsg, keywordPhrase) {
   const kwWords = keywordPhrase.split(/\s+/).filter(Boolean);
   const msgWords = normMsg.split(/\s+/);
 
-  // Palavra-chave de uma palavra só (ex: "piada", "oi") — continua exata.
-  if (kwWords.length === 1) return msgWords.includes(kwWords[0]);
+  if (kwWords.length === 1) return msgWords.includes(kwWords[0]) ? 1 : 0;
 
-  // Frase com várias palavras: tira as palavras sem muito peso (stopwords) e
-  // exige pelo menos 2 palavras "de conteúdo" pra aceitar a correspondência
-  // solta — evita que uma frase curta tipo "você é bom" vire só a palavra
-  // "bom" sozinha e bata com qualquer coisa que tenha essa palavra.
   const significant = kwWords.filter(w => !STOPWORDS.has(w) && w.length > 2);
   const wordsToCheck = significant.length >= 2 ? significant : kwWords;
-  return wordsToCheck.every(w => msgWords.includes(w));
+  return wordsToCheck.every(w => msgWords.includes(w)) ? wordsToCheck.length : 0;
+}
+
+// Varre uma lista de categorias e devolve a que tiver a combinação mais
+// específica com a mensagem (não a primeira que bater).
+function findBestMatch(normMsg, base) {
+  let best = null, bestScore = 0;
+  for (const entry of base) {
+    for (const kw of entry.keywords) {
+      const score = keywordMatchScore(normMsg, kw);
+      if (score > bestScore) { bestScore = score; best = entry; }
+    }
+  }
+  return best;
 }
 
 // ---- Calculadora seguRa (sem eval/Function) ----
@@ -428,7 +444,7 @@ const AIProviders = {
     //    das categorias gerais, porque senão uma palavra como "api" seria
     //    pega primeiro pela categoria de código genérica.
     if (window.CONVERSAS_GLOSSARY) {
-      const m = norm.match(/(?:o que e|o que significa|defina|significado de)\s+(.+)/);
+      const m = norm.match(/(?:o\s*que\s*e|o\s*que\s*significa|defina|significado de)\s+(.+)/);
       if (m) {
         const termo = m[1].trim().replace(/[?.!]+$/, '');
         if (window.CONVERSAS_GLOSSARY[termo]) return window.CONVERSAS_GLOSSARY[termo];
@@ -438,17 +454,16 @@ const AIProviders = {
       }
     }
 
-    // 3) biblioteca grande de conversas do dia a dia (conversas.js)
+    // 3) biblioteca grande de conversas do dia a dia (conversas.js) — pega a
+    //    categoria MAIS ESPECÍFICA entre as que baterem, não a primeira.
     if (window.CONVERSAS_BASE) {
-      for (const entry of window.CONVERSAS_BASE) {
-        if (entry.keywords.some(k => keywordMatches(norm, k))) return pick(entry.responses);
-      }
+      const best = findBestMatch(norm, window.CONVERSAS_BASE);
+      if (best) return pick(best.responses);
     }
 
     // 4) base embutida pequena (funciona mesmo se o conversas.js não carregar)
-    for (const entry of BUILTIN_KNOWLEDGE) {
-      if (entry.keywords.some(k => keywordMatches(norm, k))) return pick(entry.responses);
-    }
+    const builtinBest = findBestMatch(norm, BUILTIN_KNOWLEDGE);
+    if (builtinBest) return pick(builtinBest.responses);
 
     // 5) fallback
     let trecho = message.trim();
